@@ -49,9 +49,20 @@ class graphics {
         
     }
     
-    drawsprite(image, x, y){
-        this.buf.drawImage(images[image], x, y)
+    drawsprite(image, x, y, rot, scale){
+		
+		this.buf.translate(x, y)
+		
+		this.buf.rotate(rot*Math.PI/180)
+		
+        this.buf.drawImage(images[image], -images[image].width*scale/2, -images[image].height*scale/2, images[image].width*scale, images[image].height*scale)
         
+		this.buf.rotate(-rot*Math.PI/180)
+		
+		this.buf.translate(-x, -y)
+		
+		
+		
     }
     
     
@@ -75,7 +86,7 @@ async function setup(){
     graph = new graphics("canvas", "buffer", images)
     drawloop=setInterval(drawFrame, 25)
     ctx=canvas.getContext("2d")
-
+	
     
     
     
@@ -83,9 +94,11 @@ async function setup(){
 
 
 
-function drawFrame(){
+async function drawFrame(){
     counter++
-    graph.drawsprite("block.png", 100*Math.sin(counter/100)+200, 100*Math.cos(counter/100)+200)
+    await graph.drawsprite("player1.png", 300, 300, counter, 4)
+	await graph.drawsprite("player1.png", 300, 300, 0, 4)
+	
     graph.swapbuffer()
 }
 
