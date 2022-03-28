@@ -1,0 +1,145 @@
+<html>
+<head>
+<style>
+#canvas{
+border:1px solid black
+
+}
+</style>
+</head>
+
+<body onload="setup()"  onkeyup="keyUpEvent(event)" onkeydown="keyDownEvent(event)">
+<canvas onwheel="wheelEvent(event)" id="canvas" onmouseup="mouseUpEvent(event)" width="1280px" height="720px"></canvas>
+<canvas id="buffer" width="1280px" height="720px" display="none"></canvas>
+<p id="console"></p>
+<img id="img"/>
+
+
+
+
+
+</body>
+
+
+<script>
+const console = document.getElementById("console") //loading debug console
+const canvas = document.getElementById("canvas") //loading display canvas
+const buffer = document.getElementById("buffer") //loading buffer canvas
+
+
+
+class graphics {
+    
+    constructor(canvas, buffer, images){
+        
+        this.canvas = document.getElementById(canvas)
+        this.ctx = this.canvas.getContext("2d")
+        this.buffer = document.getElementById(buffer)
+        this.buf = this.buffer.getContext("2d")
+        this.images=images
+
+        
+        
+    }
+    
+    swapbuffer(){
+        this.ctx.clearRect(0, 0, this.buffer.width, this.buffer.height);
+        this.ctx.drawImage(this.buffer, 0, 0)
+        this.buf.clearRect(0, 0, this.buffer.width, this.buffer.height);
+        
+    }
+    
+    drawsprite(image, x, y){
+        this.buf.drawImage(images[image], x, y)
+        
+    }
+    
+    
+}
+
+
+
+async function setup(){
+                                    //loading images used as sprite to be drawn onto the screen
+    let response = await fetch("filelist");
+    let files = await response.json();
+    images={}
+    files.forEach(file=>{
+        let image=new Image()
+        image.src="/assets/"+file
+        images[file]=image
+        console.innerHTML+=file+"<br>"
+    })
+    document.body.appendChild(images["block.png"])
+    counter=0
+    graph = new graphics("canvas", "buffer", images)
+    drawloop=setInterval(drawFrame, 25)
+    ctx=canvas.getContext("2d")
+
+    
+    
+    
+}
+
+
+
+function drawFrame(){
+    counter++
+    graph.drawsprite("block.png", 100*Math.sin(counter/100)+200, 100*Math.cos(counter/100)+200)
+    graph.swapbuffer()
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>
+
+
+</html>
+
