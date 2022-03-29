@@ -8,10 +8,12 @@ border:1px solid black
 </style>
 </head>
 
-<body onload="setup()"  onkeyup="keyUpEvent(event)" onkeydown="keyDownEvent(event)">
+<body onload="setup()"  onkeyup="keyUpEvent(event)" onkeydown="keyDownEvent(event)" height="100%" scroll="no" style="overflow: hidden">
+<p id="console" style="float:right"></p>
 <canvas onwheel="wheelEvent(event)" id="canvas" onmouseup="mouseUpEvent(event)" width="1280px" height="720px"></canvas>
+
 <canvas id="buffer" width="1280px" height="720px" display="none"></canvas>
-<p id="console"></p>
+
 <img id="img"/>
 
 
@@ -37,7 +39,7 @@ class graphics {
         this.buffer = document.getElementById(buffer)
         this.buf = this.buffer.getContext("2d")
         this.images=images
-
+        this.camera=[0,0,0]
         
         
     }
@@ -51,17 +53,14 @@ class graphics {
     
     drawsprite(image, x, y, rot, scale){
 		
-		this.buf.translate(x, y)
-		
-		this.buf.rotate(rot*Math.PI/180)
-		
-        this.buf.drawImage(images[image], -images[image].width*scale/2, -images[image].height*scale/2, images[image].width*scale, images[image].height*scale)
-        
-		this.buf.rotate(-rot*Math.PI/180)
-		
-		this.buf.translate(-x, -y)
-		
-		
+        let nx = (x-this.camera[0]+this.canvas.width/(1.5**this.camera[2])/2)*(1.5**this.camera[2])
+        let ny = (y-this.camera[1]+this.canvas.height/(1.5**this.camera[2])/2)*(1.5**this.camera[2])
+        console.innerHTML="nx: "+nx+"<br>"+"ny: "+ny+"<br>"+(1.5**this.camera[2])
+		this.buf.translate(nx, ny)
+		this.buf.rotate(rot)
+        this.buf.drawImage(images[image], -images[image].width*scale/2*(1.5**this.camera[2]), -images[image].height*scale/2*(1.5**this.camera[2]), images[image].width*scale*(1.5**this.camera[2]), images[image].height*scale*(1.5**this.camera[2]))
+		this.buf.rotate(-rot)
+		this.buf.translate(-nx, -ny)
 		
     }
     
@@ -84,29 +83,79 @@ async function setup(){
     document.body.appendChild(images["block.png"])
     counter=0
     graph = new graphics("canvas", "buffer", images)
-    drawloop=setInterval(drawFrame, 25)
     ctx=canvas.getContext("2d")
-	
-    
-    
-    
+	forw=false
+    back=false
+    left=false
+    righ=false
+    drawloop=setInterval(drawFrame, 25)
 }
 
 
 
 async function drawFrame(){
     counter++
-    await graph.drawsprite("player1.png", 300, 300, counter, 4)
-	await graph.drawsprite("player1.png", 300, 300, 0, 4)
+    if(forw){ graph.camera[1]-=10/(1.5**graph.camera[2])}
+    if(back){ graph.camera[1]+=10/(1.5**graph.camera[2])}
+    if(left){ graph.camera[0]-=10/(1.5**graph.camera[2])}
+    if(righ){ graph.camera[0]+=10/(1.5**graph.camera[2])}
+    
+    
+    
+    
+    
+    
+    await graph.drawsprite("player1.png", 0, 0, counter*Math.PI/180, 4)
 	
     graph.swapbuffer()
+
 }
 
 
 
+async function wheelEvent(event){
+    graph.camera[2]-=event.deltaY/1000.0
+}
 
+async function keyDownEvent(event){
+    switch(event.code){
+        case "KeyW":
+            forw=true
+        break
+        case "KeyS":
+            back=true
+        break
+        case "KeyA":
+            left=true
+        break
+        case "KeyD":
+            righ=true
+        break
+    
+    
+    }
+    
+    
+}
 
-
+async function keyUpEvent(event){
+    switch(event.code){
+        case "KeyW":
+            forw=false
+        break
+        case "KeyS":
+            back=false
+        break
+        case "KeyA":
+            left=false
+        break
+        case "KeyD":
+            righ=false
+        break
+    
+    
+    }
+}
 
 
 
