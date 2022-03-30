@@ -1,4 +1,5 @@
 <html>
+<script src="/socket.io/socket.io.js"></script>
 <head>
 <style>
 #canvas{
@@ -10,7 +11,7 @@ border:1px solid black
 
 <body onload="setup()"  onkeyup="keyUpEvent(event)" onkeydown="keyDownEvent(event)" height="100%" scroll="no" style="overflow: hidden">
 <p id="console" style="float:right"></p>
-<canvas onwheel="wheelEvent(event)" id="canvas" onmouseup="mouseUpEvent(event)" width="1280px" height="720px"></canvas>
+<canvas onwheel="wheelEvent(event)" id="canvas" onmouseup="mouseUpEvent(event)" onmousedown="mouseDownEvent(event)" onmousemove="mouseMoveEvent(event)" width="1280px" height="720px"></canvas>
 
 <canvas id="buffer" width="1280px" height="720px" display="none"></canvas>
 
@@ -55,7 +56,6 @@ class graphics {
 		
         let nx = (x-this.camera[0]+this.canvas.width/(1.5**this.camera[2])/2)*(1.5**this.camera[2])
         let ny = (y-this.camera[1]+this.canvas.height/(1.5**this.camera[2])/2)*(1.5**this.camera[2])
-        console.innerHTML="nx: "+nx+"<br>"+"ny: "+ny+"<br>"+(1.5**this.camera[2])
 		this.buf.translate(nx, ny)
 		this.buf.rotate(rot)
         this.buf.drawImage(images[image], -images[image].width*scale/2*(1.5**this.camera[2]), -images[image].height*scale/2*(1.5**this.camera[2]), images[image].width*scale*(1.5**this.camera[2]), images[image].height*scale*(1.5**this.camera[2]))
@@ -71,6 +71,7 @@ class graphics {
 
 async function setup(){
                                     //loading images used as sprite to be drawn onto the screen
+    socket = io()
     let response = await fetch("filelist");
     let files = await response.json();
     images={}
@@ -78,7 +79,6 @@ async function setup(){
         let image=new Image()
         image.src="/assets/"+file
         images[file]=image
-        console.innerHTML+=file+"<br>"
     })
     document.body.appendChild(images["block.png"])
     counter=0
@@ -88,7 +88,22 @@ async function setup(){
     back=false
     left=false
     righ=false
-    drawloop=setInterval(drawFrame, 25)
+    
+    socket.on("frameUpdate", (positions)=>{
+        for(i=0; i<positions.length; i++){
+            graph.drawsprite("player1.png", positions[i][0], positions[i][1], positions[i][2], 1)
+            graph.drawsprite("arrow1.png",  positions[i][0], positions[i][1], -positions[i][3]+(Math.PI/2), 2)
+        }
+        graph.swapbuffer()
+    })
+    
+    socket.on("positionUpdate", (pos)=>{
+        graph.camera[0]=pos[0]
+        graph.camera[1]=pos[1]
+        
+    
+    })
+    //drawloop=setInterval(drawFrame, 25)
 }
 
 
@@ -118,46 +133,26 @@ async function wheelEvent(event){
 }
 
 async function keyDownEvent(event){
-    switch(event.code){
-        case "KeyW":
-            forw=true
-        break
-        case "KeyS":
-            back=true
-        break
-        case "KeyA":
-            left=true
-        break
-        case "KeyD":
-            righ=true
-        break
-    
-    
-    }
-    
-    
+    socket.emit("pressedKey", event.code)
 }
 
 async function keyUpEvent(event){
-    switch(event.code){
-        case "KeyW":
-            forw=false
-        break
-        case "KeyS":
-            back=false
-        break
-        case "KeyA":
-            left=false
-        break
-        case "KeyD":
-            righ=false
-        break
-    
-    
-    }
+    socket.emit("releasedKey", event.code)
 }
 
-
+async function mouseMoveEvent(event){
+    let x=(event.x-648)
+    let y=(event.y-368)
+    if(y==0){y++}
+    let rot=Math.acos(x/Math.sqrt(x**2+y**2))*Math.sign(y)%(2*Math.PI)
+    if(rot<0){
+        rot+=2*Math.PI
+    }
+    rot=Math.abs(rot-(2*Math.PI))
+    console.innerHTML=rot
+    
+    socket.emit("movedMouse", rot)
+}
 
 
 
