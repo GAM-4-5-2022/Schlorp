@@ -84,6 +84,7 @@ async function setup(){
     counter=0
     graph = new graphics("canvas", "buffer", images)
     ctx=canvas.getContext("2d")
+    buf=buffer.getContext("2d")
 	forw=false
     back=false
     left=false
@@ -91,7 +92,7 @@ async function setup(){
     
     socket.on("frameUpdate", (positions)=>{
         for(i=0; i<positions.length; i++){
-            graph.drawsprite("player1.png", positions[i][0], positions[i][1], positions[i][2], 1)
+            graph.drawsprite("player1.png", positions[i][0], positions[i][1], -positions[i][2]+(Math.PI/2), 1)
             graph.drawsprite("arrow1.png",  positions[i][0], positions[i][1], -positions[i][3]+(Math.PI/2), 2)
         }
         graph.swapbuffer()
@@ -103,28 +104,22 @@ async function setup(){
         
     
     })
-    //drawloop=setInterval(drawFrame, 25)
+    
+    socket.on("debugUpdate", (poss)=>{
+        for (let i =0; i<poss.length; i++){
+            let nx = (poss[i][0]-graph.camera[0]+graph.canvas.width/(1.5**graph.camera[2])/2)*(1.5**graph.camera[2])
+            let ny = (poss[i][1]-graph.camera[1]+graph.canvas.height/(1.5**graph.camera[2])/2)*(1.5**graph.camera[2])
+            buf.beginPath();
+            buf.arc(nx, ny, 2, 0, 2 * Math.PI);
+            buf.fill();
+                        
+        }
+    })
 }
 
 
 
-async function drawFrame(){
-    counter++
-    if(forw){ graph.camera[1]-=10/(1.5**graph.camera[2])}
-    if(back){ graph.camera[1]+=10/(1.5**graph.camera[2])}
-    if(left){ graph.camera[0]-=10/(1.5**graph.camera[2])}
-    if(righ){ graph.camera[0]+=10/(1.5**graph.camera[2])}
-    
-    
-    
-    
-    
-    
-    await graph.drawsprite("player1.png", 0, 0, counter*Math.PI/180, 4)
-	
-    graph.swapbuffer()
 
-}
 
 
 
