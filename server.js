@@ -22,7 +22,34 @@ app.get('/filelist', async (req, res) => {
 });
 
 players=[]
-tanksize=[22,70]
+tanksize=[50,80]
+
+
+const map = require("./map.json")
+console.log(map)
+walls=[]
+
+for (i=0; i<(map.length/2); i++){
+    for(j=0; j<map[i*2].length;j++){
+        if(map[i*2][j]){
+            walls.push([80+160*j, 160*i,20,140])
+        }
+    }
+}
+
+for (i=0; i<(map.length/2-1); i++){
+    for(j=0; j<map[i*2+1].length;j++){
+        if(map[i*2+1][j]){
+            walls.push([160*j, 80+160*i,140,20])
+        }
+    }
+}
+
+console.log(walls)
+
+
+
+
 
 
 function checkPoint(point, rect){
@@ -77,32 +104,59 @@ async function mainLoop(){
     let debugpos = getPoints(positions[0][0],positions[0][1],tanksize[0],tanksize[1],positions[0][2])
     try{
         for(let i=0; i<players.length; i++){
-            players[i].coords[2]+=0.01*players[i].left
-            players[i].coords[2]-=0.01*players[i].right
-            players[i].coords[0]+=2.5*players[i].forward*Math.cos(players[i].coords[2])
-            players[i].coords[1]-=2.5*players[i].forward*Math.sin(players[i].coords[2])
-            players[i].coords[0]-=2.5*players[i].backward*Math.cos(players[i].coords[2])
-            players[i].coords[1]+=2.5*players[i].backward*Math.sin(players[i].coords[2])
+            players[i].coords[2]+=0.02*players[i].left
+            players[i].coords[2]-=0.02*players[i].right
+            players[i].coords[0]+=5*players[i].forward*Math.cos(players[i].coords[2])
+            players[i].coords[1]-=5*players[i].forward*Math.sin(players[i].coords[2])
+            players[i].coords[0]-=5*players[i].backward*Math.cos(players[i].coords[2])
+            players[i].coords[1]+=5*players[i].backward*Math.sin(players[i].coords[2])
             
             let points=getPoints(players[i].coords[0], players[i].coords[1], tanksize[0], tanksize[1], players[i].coords[2])
             debugpos=debugpos.concat(points)
             
-            console.log(debugpos)
             let collision = false
             for(let j=0; j<4; j++){
                 for(let k=0; k<positions.length; k++){
                     if(checkPoint(points[j], getPoints(positions[k][0],positions[k][1],tanksize[0],tanksize[1],positions[k][2]))){
+                        
+                        collision=true
+                        break
+                    }
+                    if(checkPoint(getPoints(positions[k][0],positions[k][1],tanksize[0],tanksize[1],positions[k][2])[j], points )){
+                        
                         collision=true
                         break
                     }
                 }
+                for(let k=0; k<walls.length; k++){
+                    debugpos=debugpos.concat(getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))
+                    if(checkPoint(points[j], getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))){
+                        
+                        
+                        
+                        collision=true
+                        break
+                    }
+                    if(checkPoint(getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0)[j], points )){
+                        
+                        
+                        
+                        collision=true
+                        break
+                    }
+                    
+                    
+                    
+                    
+                }
+                
                 if(collision){
-                    players[i].coords[0]-=2.5*players[i].forward*Math.cos(players[i].coords[2])
-                    players[i].coords[1]+=2.5*players[i].forward*Math.sin(players[i].coords[2])
-                    players[i].coords[0]+=2.5*players[i].backward*Math.cos(players[i].coords[2])
-                    players[i].coords[1]-=2.5*players[i].backward*Math.sin(players[i].coords[2])
-                    players[i].coords[2]-=0.01*players[i].left
-                    players[i].coords[2]+=0.01*players[i].right
+                    players[i].coords[0]-=5*players[i].forward*Math.cos(players[i].coords[2])
+                    players[i].coords[1]+=5*players[i].forward*Math.sin(players[i].coords[2])
+                    players[i].coords[0]+=5*players[i].backward*Math.cos(players[i].coords[2])
+                    players[i].coords[1]-=5*players[i].backward*Math.sin(players[i].coords[2])
+                    players[i].coords[2]-=0.02*players[i].left
+                    players[i].coords[2]+=0.02*players[i].right
                     break
                 }
             }
@@ -114,9 +168,9 @@ async function mainLoop(){
                 players[i].coords[3]=players[i].mouserot
             }else{
                 if(Math.abs(players[i].mouserot-players[i].coords[3])>Math.PI){
-                    players[i].coords[3]-=0.03*Math.sign(players[i].mouserot-players[i].coords[3])
+                    players[i].coords[3]-=0.06*Math.sign(players[i].mouserot-players[i].coords[3])
                 }else{
-                    players[i].coords[3]+=0.03*Math.sign(players[i].mouserot-players[i].coords[3])
+                    players[i].coords[3]+=0.06*Math.sign(players[i].mouserot-players[i].coords[3])
                 }
                 
             }
@@ -132,15 +186,16 @@ async function mainLoop(){
             await players[i].emit("positionUpdate", players[i].coords)
             await positions.push(players[i].coords)
         }
+        
         await io.emit("frameUpdate", positions)
-        await io.emit("debugUpdate", debugpos)
+        //await io.emit("debugUpdate", debugpos)
     }catch{
         console.log("Skipped frame")
     }
     
 
 }
-setInterval(mainLoop, 10)
+setInterval(mainLoop, 20)
 
 
 
@@ -173,13 +228,13 @@ io.sockets.on("connection", (socket)=>{
     
     
     
-    socket.coords=[0,0,0,0] //x position, y position, turret rotation, chasis rotation
+    socket.coords=[80,80,0,0] //x position, y position, turret rotation, chasis rotation
     socket.forward=false
     socket.backward=false
     socket.right=false
     socket.left=false
     socket.mouserot=0
-    
+    socket.emit("wallUpdate", walls)
     socket.on("pressedKey", (key)=>{
         console.log("keypress "+key)
         switch (key){
