@@ -72,6 +72,9 @@ class graphics {
 async function setup(){
                                     //loading images used as sprite to be drawn onto the screen
     socket = io()
+    socket.on("wallUpdate", (walls)=>{
+        walllist=walls
+    })
     let response = await fetch("filelist");
     let files = await response.json();
     images={}
@@ -95,6 +98,13 @@ async function setup(){
             graph.drawsprite("player1.png", positions[i][0], positions[i][1], -positions[i][2]+(Math.PI/2), 1)
             graph.drawsprite("arrow1.png",  positions[i][0], positions[i][1], -positions[i][3]+(Math.PI/2), 2)
         }
+        for(i=0; i<walllist.length; i++){
+            if(walllist[i][2]==20){
+                graph.drawsprite("horiwall.png", walllist[i][0], walllist[i][1], 0, 1)
+            }else{
+                graph.drawsprite("vertwall.png", walllist[i][0], walllist[i][1], 0, 1)
+            }
+        }
         graph.swapbuffer()
     })
     
@@ -110,7 +120,7 @@ async function setup(){
             let nx = (poss[i][0]-graph.camera[0]+graph.canvas.width/(1.5**graph.camera[2])/2)*(1.5**graph.camera[2])
             let ny = (poss[i][1]-graph.camera[1]+graph.canvas.height/(1.5**graph.camera[2])/2)*(1.5**graph.camera[2])
             buf.beginPath();
-            buf.arc(nx, ny, 2, 0, 2 * Math.PI);
+            buf.arc(nx, ny, 3, 0, 2 * Math.PI);
             buf.fill();
                         
         }
