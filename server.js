@@ -23,8 +23,9 @@ app.get('/filelist', async (req, res) => {
 
 players=[]
 tanksize=[50,80]
-
-
+turretlen=Math.sqrt((tanksize[0]/2)**2+(tanksize[1]/2)**2)
+targetframerate=15
+framerate=15
 const map = require("./map.json")
 console.log(map)
 walls=[]
@@ -32,7 +33,7 @@ walls=[]
 for (i=0; i<(map.length/2); i++){
     for(j=0; j<map[i*2].length;j++){
         if(map[i*2][j]){
-            walls.push([80+160*j, 160*i,20,140])
+            walls.push([80+160*j, 160*i,20,160])
         }
     }
 }
@@ -40,16 +41,20 @@ for (i=0; i<(map.length/2); i++){
 for (i=0; i<(map.length/2-1); i++){
     for(j=0; j<map[i*2+1].length;j++){
         if(map[i*2+1][j]){
-            walls.push([160*j, 80+160*i,140,20])
+            walls.push([160*j, 80+160*i,160,20])
         }
     }
 }
 
-console.log(walls)
-
-
-
-
+mapheight=(map.length-1)/2
+mapwidth=(map[0].length)
+console.log(mapwidth+" "+mapheight)
+projectiles=[]
+packet={}
+packet.size=[30,30]
+packet.effects=["shield", "laser", "shotgun", "reload", "invis", "speed", "chill", "revive"]
+packet.durations=[5000, 1, 1, 20000, 10000, 20000, 3000, 1]
+packets=[]
 
 
 function checkPoint(point, rect){
@@ -96,70 +101,144 @@ function getPoints(x,y,w,h,rot){
     return([[x-x1, y+y1],[x+x2, y-y2],[x+x1, y-y1],[x-x2, y+y2]])
 }
 
-
-
+counter=0
+time=new Date()
+tajm=time.getTime()
 async function mainLoop(){
     
-    let positions=[[0,0,0,0]]
-    let debugpos = getPoints(positions[0][0],positions[0][1],tanksize[0],tanksize[1],positions[0][2])
+    let positions={"tanks":[], "projectiles":[], "packs":[]}
+    let debugpos = []
     try{
-        for(let i=0; i<players.length; i++){
-            players[i].coords[2]+=0.02*players[i].left
-            players[i].coords[2]-=0.02*players[i].right
-            players[i].coords[0]+=5*players[i].forward*Math.cos(players[i].coords[2])
-            players[i].coords[1]-=5*players[i].forward*Math.sin(players[i].coords[2])
-            players[i].coords[0]-=5*players[i].backward*Math.cos(players[i].coords[2])
-            players[i].coords[1]+=5*players[i].backward*Math.sin(players[i].coords[2])
+        
+        if(Math.random()*7000<framerate){
+
+            let type=Math.floor(Math.random()*packet.effects.length)
+
             
-            let points=getPoints(players[i].coords[0], players[i].coords[1], tanksize[0], tanksize[1], players[i].coords[2])
+            packets.push([80+Math.floor(Math.random()*mapwidth)*160, 80+Math.floor(Math.random()*mapheight)*160, packet.effects[type], packet.durations[type]])
+            console.log("Packet spawn")
+            console.log(packets[packets.length-1])
+        }
+        
+        
+        
+        
+        
+        
+        for(let i=0; i<players.length; i++){
+            if(players[i].effects.shield){
+                players[i].effects.shield-=framerate
+                if(players[i].effects.shield<0){
+                    players[i].effects.shield=0
+                }
+            }else if(players[i].effects.reload){
+                players[i].effects.reload-=framerate
+                if(players[i].effects.reload<0){
+                    players[i].effects.reload=0
+                }
+            }else if(players[i].effects.speed){
+                players[i].effects.speed-=framerate
+                if(players[i].effects.speed<0){
+                    players[i].effects.speed=0
+                }
+            }else if(players[i].effects.invis){
+                players[i].effects.invis-=framerate
+                if(players[i].effects.invis<0){
+                    players[i].effects.invis=0
+                }
+            }else if(players[i].effects.chill){
+                players[i].effects.chill-=framerate
+                if(players[i].effects.chill<0){
+                    players[i].effects.chill=0
+                }
+            }else if(players[i].effects.reviving){
+                players[i].effects.reviving-=framerate
+                if(players[i].effects.reviving<=0){
+                    players[i].effects.reviving=0
+                    players[i].effects.shield=2000
+                }
+            }
+            
+            
+            
+            
+            
+            
+            
+            coordtest=[...players[i].coords]
+            if(!players[i].effects.chill && !players[i].effects.reviving){
+                coordtest[2]+=0.04/20*framerate**players[i].left
+                coordtest[2]-=0.04/20*framerate**players[i].right
+                coordtest[0]+=5/20*framerate*players[i].forward*Math.cos(players[i].coords[2])
+                coordtest[1]-=5/20*framerate*players[i].forward*Math.sin(players[i].coords[2])
+                coordtest[0]-=5/20*framerate*players[i].backward*Math.cos(players[i].coords[2])
+                coordtest[1]+=5/20*framerate*players[i].backward*Math.sin(players[i].coords[2])
+                if(players[i].effects.speed){
+                    coordtest[2]+=0.04/20*framerate**players[i].left
+                    coordtest[2]-=0.04/20*framerate**players[i].right
+                    coordtest[0]+=5/20*framerate*players[i].forward*Math.cos(players[i].coords[2])
+                    coordtest[1]-=5/20*framerate*players[i].forward*Math.sin(players[i].coords[2])
+                    coordtest[0]-=5/20*framerate*players[i].backward*Math.cos(players[i].coords[2])
+                    coordtest[1]+=5/20*framerate*players[i].backward*Math.sin(players[i].coords[2])
+                }
+            }
+            
+            let points=getPoints(coordtest[0], coordtest[1], tanksize[0], tanksize[1], coordtest[2])
             debugpos=debugpos.concat(points)
             
             let collision = false
-            for(let j=0; j<4; j++){
-                for(let k=0; k<positions.length; k++){
-                    if(checkPoint(points[j], getPoints(positions[k][0],positions[k][1],tanksize[0],tanksize[1],positions[k][2]))){
-                        
-                        collision=true
-                        break
-                    }
-                    if(checkPoint(getPoints(positions[k][0],positions[k][1],tanksize[0],tanksize[1],positions[k][2])[j], points )){
-                        
-                        collision=true
-                        break
+            
+            for(let k=0; k<players.length; k++){
+                if(k==i){
+                    continue
+                }
+                if( ((coordtest[0]-players[k].coords[0])**2 + (coordtest[1]-players[k].coords[1])**2) < ((tanksize[0]**2 + tanksize[1]**2)*4)){
+                    for(let j=0; j<4; j++){
+                        if(checkPoint(points[j], getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2]))){
+                            
+                            collision=true
+                            break
+                        }
+                        if(checkPoint(getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2])[j], points )){
+                            
+                            collision=true
+                            break
+                        }
                     }
                 }
-                for(let k=0; k<walls.length; k++){
-                    debugpos=debugpos.concat(getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))
-                    if(checkPoint(points[j], getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))){
-                        
-                        
-                        
-                        collision=true
-                        break
-                    }
-                    if(checkPoint(getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0)[j], points )){
-                        
-                        
-                        
-                        collision=true
-                        break
-                    }
-                    
-                    
-                    
-                    
-                }
-                
                 if(collision){
-                    players[i].coords[0]-=5*players[i].forward*Math.cos(players[i].coords[2])
-                    players[i].coords[1]+=5*players[i].forward*Math.sin(players[i].coords[2])
-                    players[i].coords[0]+=5*players[i].backward*Math.cos(players[i].coords[2])
-                    players[i].coords[1]-=5*players[i].backward*Math.sin(players[i].coords[2])
-                    players[i].coords[2]-=0.02*players[i].left
-                    players[i].coords[2]+=0.02*players[i].right
+                    
                     break
                 }
             }
+                
+            for(let k=0; k<walls.length; k++){
+                if(collision){
+                    break
+                }
+                if( ((coordtest[0]-walls[k][0])**2 + (coordtest[1]-walls[k][1])**2) < ((tanksize[0]+walls[k][2])**2 + (tanksize[1]+walls[k][3])**2)){
+                    for(let j=0; j<4; j++){
+                        debugpos=debugpos.concat(getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))
+                        if(checkPoint(points[j], getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))){
+                            
+                            collision=true
+                            break
+                        }
+                        if(checkPoint(getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0)[j], points )){
+                            
+                            collision=true
+                            break
+                        }
+                    }
+                }
+            }
+            
+                
+            if(!collision){
+                
+                players[i].coords=[...coordtest]
+            }
+            
             
             
             
@@ -168,11 +247,17 @@ async function mainLoop(){
                 players[i].coords[3]=players[i].mouserot
             }else{
                 if(Math.abs(players[i].mouserot-players[i].coords[3])>Math.PI){
-                    players[i].coords[3]-=0.06*Math.sign(players[i].mouserot-players[i].coords[3])
+                    players[i].coords[3]-=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
                 }else{
-                    players[i].coords[3]+=0.06*Math.sign(players[i].mouserot-players[i].coords[3])
+                    players[i].coords[3]+=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
                 }
-                
+                if(players[i].effects.speed){
+                    if(Math.abs(players[i].mouserot-players[i].coords[3])>Math.PI){
+                        players[i].coords[3]-=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
+                    }else{
+                        players[i].coords[3]+=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
+                    }
+                }
             }
             
             if(players[i].coords[3]<0){
@@ -180,22 +265,122 @@ async function mainLoop(){
             }else if (players[i].coords[3]>(2*Math.PI)){
                 players[i].coords[3]-=2*Math.PI
             }
+            if(!players[i].effects.invis){
+                positions.tanks.push(players[i].coords)
+            }
             
         }
-        for(i=0; i<players.length; i++){
-            await players[i].emit("positionUpdate", players[i].coords)
-            await positions.push(players[i].coords)
+
+        delplayers=[]
+        delprojectiles=[]
+        for(i=0; i<projectiles.length; i++){
+            collision=false
+            projectiles[i][0]+=0.5*framerate*Math.cos(projectiles[i][2])+(4*projectiles[i][3])
+            projectiles[i][1]-=0.5*framerate*Math.sin(projectiles[i][2])+(4*projectiles[i][3])
+            
+            
+            
+            
+            for(let k=0; k<walls.length; k++){
+                if( ((projectiles[i][0]-walls[k][0])**2 + (projectiles[i][1]-walls[k][1])**2) < ((walls[k][2])**2 + (walls[k][3])**2)){
+                    
+                    debugpos=debugpos.concat(getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))
+                    if(checkPoint(projectiles[i], getPoints(walls[k][0],walls[k][1],walls[k][2],walls[k][3],0))){
+                        collision=true
+                        break
+                    }
+                    
+                }
+            }
+            for(let k=0; k<players.length; k++){
+                if( ((projectiles[i][0]-players[k].coords[0])**2 + (projectiles[i][1]-players[k].coords[1])**2) < (tanksize[0]**2 + tanksize[1]**2)){
+                    if(checkPoint(projectiles[i], getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2]))){
+                        collision=true
+                        console.log("HIT!!!")
+                        if(!players[k].effects.shield){
+                            if(players[k].effects.revive){
+                                players[k].effects.reviving=1000
+                                players[k].effects.revive=0
+                            }else{
+                                players[k].removeAllListeners()
+                                players[k].emit("spectator", "")
+                                delplayers.push(k)
+                            }
+                        }
+                        break
+                    }
+                }
+            }
+            if (!collision){
+                
+                positions.projectiles.push(projectiles[i])
+                
+            }else{
+                delprojectiles.push(i)
+            }
+        }
+        delpackets=[]
+        for(i=0; i<packets.length; i++){
+            collision=false
+            
+
+            for(let k=0; k<players.length; k++){
+                if( (!(players[k].effects.shield+players[k].effects.laser+players[k].effects.shotgun+players[k].effects.reload+players[k].effects.invis+players[k].effects.speed+players[k].effects.revive+players[k].effects.reviving))&&(((packets[i][0]-players[k].coords[0])**2 + (packets[i][1]-players[k].coords[1])**2) < (tanksize[0]*packet.size[0] + tanksize[1]*packet.size[1]))){
+                    if(checkPoint([packets[i][0], packets[i][1]], getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2]))){
+                        players[k].effects[packets[i][2]]=packets[i][3]
+                        console.log("EFFECT GOT: "+packets[i][2])
+                        
+                        collision=true
+                        break
+                        
+                    }
+                }
+            }
+            if (!collision){
+                
+                positions.packs.push(packets[i])
+                
+            }else{
+                delpackets.push(i)
+            }
         }
         
+        
+        
+        
+        for(i=0; i<delpackets.length; i++){
+            packets.splice(delpackets[i], 1)
+        }
+        for(i=0; i<delprojectiles.length; i++){
+            projectiles.splice(delprojectiles[i], 1)
+        }
+        for(i=0; i<delplayers.length; i++){
+            players.splice(delplayers[i], 1)
+        }
+        
+        for(i=0; i<players.length; i++){
+            await players[i].emit("positionUpdate", players[i].coords)
+            
+            await players[i].emit("statusUpdate", players[i].effects)
+        }
+        
+        
         await io.emit("frameUpdate", positions)
-        //await io.emit("debugUpdate", debugpos)
-    }catch{
-        console.log("Skipped frame")
+        await io.emit("debugUpdate", debugpos)
+    }catch(e){
+        console.log("Skipped frame: "+e)
     }
-    
+    counter++
+    if(counter%100==0){
+        time=new Date()
+        console.log(counter+" "+((time.getTime()-tajm)/100))
+        framerate=((time.getTime()-tajm)/100)
+        tajm=time.getTime()
+    }
 
 }
-setInterval(mainLoop, 20)
+
+setInterval(mainLoop, targetframerate)
 
 
 
@@ -234,6 +419,21 @@ io.sockets.on("connection", (socket)=>{
     socket.right=false
     socket.left=false
     socket.mouserot=0
+    socket.effects={}
+    socket.effects.dead=false
+    socket.effects.lastshot=0
+    
+    socket.effects.shield=0
+    socket.effects.laser=0
+    socket.effects.shotgun=0
+    socket.effects.reload=0
+    socket.effects.speed=0
+    socket.effects.invis=0
+    socket.effects.chill=0
+    socket.effects.revive=0
+    socket.effects.reviving=0
+    
+    
     socket.emit("wallUpdate", walls)
     socket.on("pressedKey", (key)=>{
         console.log("keypress "+key)
@@ -272,21 +472,42 @@ io.sockets.on("connection", (socket)=>{
         
     })
     
+    socket.on("pressedMouse", (msg)=>{
+        time=new Date()
+        if((socket.effects.lastshot)<time.getTime()){
+            socket.effects.invis=0
+            if(socket.effects.shotgun){
+                socket.effects.shotgun=0
+                for(let i=0; i<10; i++){
+                    let diffangle=(Math.random()-0.5)/6+socket.coords[3]
+                    if(diffangle>(2*Math.PI)){
+                        diffangle-=(2*Math.PI)
+                    }
+                    if(diffangle<0){
+                        diffangle+=(2*Math.PI)
+                    }
+                    projectiles.push([socket.coords[0]+turretlen*Math.cos(socket.coords[3]), socket.coords[1]-turretlen*Math.sin(socket.coords[3]), diffangle, 0])
+                    
+                }
+            }else{
+                projectiles.push([socket.coords[0]+turretlen*Math.cos(socket.coords[3]), socket.coords[1]-turretlen*Math.sin(socket.coords[3]), socket.coords[3], socket.effects.laser])
+                socket.effects.laser=0
+            }
+            socket.effects.lastshot=time.getTime()+2000
+            if(socket.effects.reload){
+                socket.effects.lastshot-=1000
+            }
+        }
+        
+    })
+    
     socket.on("movedMouse", (rot)=>{
         socket.mouserot=rot
-        
-        
-        
     })
     
     
     
     players.push(socket)
-    
-    
-    
-    
-    
     
     socket.on("disconnect", async ()=>{  //deleting all instances of the client existing on the server
         let disc=players.indexOf(socket)
