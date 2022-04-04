@@ -63,6 +63,11 @@ class graphics {
 		this.buf.translate(-nx, -ny)
 		
     }
+    drawstatus(image, x, y, scale){
+        this.buf.drawImage(images[image], x, y, images[image].width*scale, images[image].height*scale)
+    
+    
+    }
     
     
 }
@@ -75,6 +80,11 @@ async function setup(){
     socket.on("wallUpdate", (walls)=>{
         walllist=walls
     })
+    spectator=false
+    socket.on("spectator", (msg)=>{
+        spectator=true
+    })
+    statuss={}
     let response = await fetch("filelist");
     let files = await response.json();
     images={}
@@ -94,10 +104,32 @@ async function setup(){
     righ=false
     
     socket.on("frameUpdate", (positions)=>{
-        for(i=0; i<positions.length; i++){
-            graph.drawsprite("player1.png", positions[i][0], positions[i][1], -positions[i][2]+(Math.PI/2), 1)
-            graph.drawsprite("arrow1.png",  positions[i][0], positions[i][1], -positions[i][3]+(Math.PI/2), 2)
+        
+        graph.camera[0]-=righ*10
+        graph.camera[0]+=left*10
+        graph.camera[1]-=back*10
+        graph.camera[1]+=forw*10
+        
+        
+        
+        
+        for(i=0; i<positions.tanks.length; i++){
+            graph.drawsprite("player1.png", positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][2]+(Math.PI/2), 1)
+            graph.drawsprite("arrow1.png",  positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][3]+(Math.PI/2), 4)
         }
+        for(i=0; i<positions.projectiles.length; i++){
+            graph.drawsprite("block.png", positions.projectiles[i][0], positions.projectiles[i][1], positions.projectiles[i][2], 0.5)
+        }
+        for(i=0; i<positions.packs.length; i++){
+            graph.drawsprite("block.png", positions.packs[i][0], positions.packs[i][1], 0, 2)
+        }
+        
+        
+        time=new Date()
+        window.console.log(time.getTime()-statuss.lastshot)
+        
+        
+       
         for(i=0; i<walllist.length; i++){
             if(walllist[i][2]==20){
                 graph.drawsprite("horiwall.png", walllist[i][0], walllist[i][1], 0, 1)
@@ -105,12 +137,31 @@ async function setup(){
                 graph.drawsprite("vertwall.png", walllist[i][0], walllist[i][1], 0, 1)
             }
         }
+        
+        if(time.getTime()<statuss.lastshot){
+            graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height+(statuss.lastshot-time.getTime())/25, 1)
+        }else{
+            graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height, 1)
+        }
+        
         graph.swapbuffer()
     })
     
+    socket.on("statusUpdate", (stat)=>{
+        statuss=Object.assign({}, stat);
+        console.innerHTML=statuss.lastshot
+    })
+    
+    
+    
+    
+    
+    
     socket.on("positionUpdate", (pos)=>{
-        graph.camera[0]=pos[0]
-        graph.camera[1]=pos[1]
+        if(!spectator){
+            graph.camera[0]=pos[0]
+            graph.camera[1]=pos[1]
+        }
         
     
     })
@@ -138,28 +189,74 @@ async function wheelEvent(event){
 }
 
 async function keyDownEvent(event){
-    socket.emit("pressedKey", event.code)
+    if(spectator){
+        switch(event.code){
+            case "KeyW":
+                forw=false
+            break
+            case "KeyS":
+                back=false
+            break
+            case "KeyA":
+                left=false
+            break
+            case "KeyD":
+                righ=false
+            break
+            
+        }
+    }else{
+        socket.emit("pressedKey", event.code)
+    }
 }
 
 async function keyUpEvent(event){
-    socket.emit("releasedKey", event.code)
+    if(spectator){
+        switch(event.code){
+            case "KeyW":
+                forw=true
+            break
+            case "KeyS":
+                back=true
+            break
+            case "KeyA":
+                left=true
+            break
+            case "KeyD":
+                righ=true
+            break
+            
+        }
+    }else{
+        socket.emit("releasedKey", event.code)
+    }
 }
 
 async function mouseMoveEvent(event){
-    let x=(event.x-648)
-    let y=(event.y-368)
-    if(y==0){y++}
-    let rot=Math.acos(x/Math.sqrt(x**2+y**2))*Math.sign(y)%(2*Math.PI)
-    if(rot<0){
-        rot+=2*Math.PI
-    }
-    rot=Math.abs(rot-(2*Math.PI))
-    console.innerHTML=rot
+    if(spectator){
     
-    socket.emit("movedMouse", rot)
+    }else{
+        let x=(event.x-648)
+        let y=(event.y-368)
+        if(y==0){y++}
+        let rot=Math.acos(x/Math.sqrt(x**2+y**2))*Math.sign(y)%(2*Math.PI)
+        if(rot<0){
+            rot+=2*Math.PI
+        }
+        rot=Math.abs(rot-(2*Math.PI))
+       
+        
+        socket.emit("movedMouse", rot)
+    }
 }
 
-
+async function mouseDownEvent(event){
+    if(spectator){
+    
+    }else{
+        socket.emit("pressedMouse", "")
+    }
+}
 
 
 
