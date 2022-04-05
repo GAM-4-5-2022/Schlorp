@@ -53,7 +53,7 @@ projectiles=[]
 packet={}
 packet.size=[30,30]
 packet.effects=["shield", "laser", "shotgun", "reload", "invis", "speed", "chill", "revive"]
-packet.durations=[5000, 1, 1, 20000, 10000, 20000, 3000, 1]
+packet.durations=[7000, 1, 1, 10000, 7000, 20000, 5000, 1]
 packets=[]
 
 
@@ -113,7 +113,7 @@ async function mainLoop(){
         if(Math.random()*7000<framerate){
 
             let type=Math.floor(Math.random()*packet.effects.length)
-
+            
             
             packets.push([80+Math.floor(Math.random()*mapwidth)*160, 80+Math.floor(Math.random()*mapheight)*160, packet.effects[type], packet.durations[type]])
             console.log("Packet spawn")
@@ -271,12 +271,12 @@ async function mainLoop(){
             
         }
 
-        delplayers=[]
-        delprojectiles=[]
+        let delplayers=[]
+        let delprojectiles=[]
         for(i=0; i<projectiles.length; i++){
             collision=false
-            projectiles[i][0]+=0.5*framerate*Math.cos(projectiles[i][2])+(4*projectiles[i][3])
-            projectiles[i][1]-=0.5*framerate*Math.sin(projectiles[i][2])+(4*projectiles[i][3])
+            projectiles[i][0]+=(0.5+(0.5*projectiles[i][3]))*framerate*Math.cos(projectiles[i][2])
+            projectiles[i][1]-=(0.5+(0.5*projectiles[i][3]))*framerate*Math.sin(projectiles[i][2])
             
             
             
@@ -347,13 +347,18 @@ async function mainLoop(){
         
         
         
-        
+        delpackets.sort()
+        delpackets=delpackets.reverse()
         for(i=0; i<delpackets.length; i++){
             packets.splice(delpackets[i], 1)
         }
+        delprojectiles.sort()
+        delprojectiles=delprojectiles.reverse()
         for(i=0; i<delprojectiles.length; i++){
             projectiles.splice(delprojectiles[i], 1)
         }
+        delplayers.sort()
+        delplayers=delplayers.reverse()
         for(i=0; i<delplayers.length; i++){
             players.splice(delplayers[i], 1)
         }
@@ -412,7 +417,6 @@ io.sockets.on("connection", (socket)=>{
     
     
     
-    
     socket.coords=[80,80,0,0] //x position, y position, turret rotation, chasis rotation
     socket.forward=false
     socket.backward=false
@@ -436,7 +440,6 @@ io.sockets.on("connection", (socket)=>{
     
     socket.emit("wallUpdate", walls)
     socket.on("pressedKey", (key)=>{
-        console.log("keypress "+key)
         switch (key){
             case "KeyW":
                 socket.forward=true
@@ -454,7 +457,7 @@ io.sockets.on("connection", (socket)=>{
         
     })
     socket.on("releasedKey", (key)=>{
-        console.log("keyrelease "+key)
+        
         switch (key){
             case "KeyW":
                 socket.forward=false
@@ -478,15 +481,16 @@ io.sockets.on("connection", (socket)=>{
             socket.effects.invis=0
             if(socket.effects.shotgun){
                 socket.effects.shotgun=0
-                for(let i=0; i<10; i++){
-                    let diffangle=(Math.random()-0.5)/6+socket.coords[3]
+                for(let i=0; i<3; i++){
+                    let diffangle=(Math.random()-0.5)/3+socket.coords[3]
                     if(diffangle>(2*Math.PI)){
                         diffangle-=(2*Math.PI)
                     }
                     if(diffangle<0){
                         diffangle+=(2*Math.PI)
                     }
-                    projectiles.push([socket.coords[0]+turretlen*Math.cos(socket.coords[3]), socket.coords[1]-turretlen*Math.sin(socket.coords[3]), diffangle, 0])
+                    let projec=[socket.coords[0]+turretlen*Math.cos(socket.coords[3]), socket.coords[1]-turretlen*Math.sin(socket.coords[3]), diffangle, 0]
+                    projectiles.push([...projec])
                     
                 }
             }else{
@@ -495,7 +499,7 @@ io.sockets.on("connection", (socket)=>{
             }
             socket.effects.lastshot=time.getTime()+2000
             if(socket.effects.reload){
-                socket.effects.lastshot-=1000
+                socket.effects.lastshot-=1500
             }
         }
         
@@ -510,6 +514,7 @@ io.sockets.on("connection", (socket)=>{
     players.push(socket)
     
     socket.on("disconnect", async ()=>{  //deleting all instances of the client existing on the server
+        console.log(socket.coords)
         let disc=players.indexOf(socket)
         await players.splice(disc, 1)
 		console.log("disconnected "+disc)
