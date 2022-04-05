@@ -109,7 +109,7 @@ async function mainLoop(){
     let positions={"tanks":[], "projectiles":[], "packs":[]}
     let debugpos = []
     try{
-        
+        let time=new Date()
         if(Math.random()*7000<framerate){
 
             let type=Math.floor(Math.random()*packet.effects.length)
@@ -246,18 +246,21 @@ async function mainLoop(){
             if(Math.abs(players[i].mouserot-players[i].coords[3])<0.1){
                 players[i].coords[3]=players[i].mouserot
             }else{
-                if(Math.abs(players[i].mouserot-players[i].coords[3])>Math.PI){
-                    players[i].coords[3]-=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
-                }else{
-                    players[i].coords[3]+=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
-                }
-                if(players[i].effects.speed){
+                if(players[i].effects.reviving==0){
                     if(Math.abs(players[i].mouserot-players[i].coords[3])>Math.PI){
                         players[i].coords[3]-=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
                     }else{
                         players[i].coords[3]+=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
                     }
+                    if(players[i].effects.speed){
+                        if(Math.abs(players[i].mouserot-players[i].coords[3])>Math.PI){
+                            players[i].coords[3]-=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
+                        }else{
+                            players[i].coords[3]+=0.06/20*framerate*Math.sign(players[i].mouserot-players[i].coords[3])
+                        }
+                    }
                 }
+                
             }
             
             if(players[i].coords[3]<0){
@@ -477,7 +480,7 @@ io.sockets.on("connection", (socket)=>{
     
     socket.on("pressedMouse", (msg)=>{
         time=new Date()
-        if((socket.effects.lastshot)<time.getTime()){
+        if((socket.effects.lastshot)<time.getTime() && socket.effects.reviving==0){
             socket.effects.invis=0
             if(socket.effects.shotgun){
                 socket.effects.shotgun=0
