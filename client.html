@@ -126,7 +126,7 @@ async function setup(){
         
         
         time=new Date()
-        window.console.log(time.getTime()-statuss.lastshot)
+        
         
         
        
@@ -137,7 +137,7 @@ async function setup(){
                 graph.drawsprite("vertwall.png", walllist[i][0], walllist[i][1], 0, 1)
             }
         }
-        
+        window.console.log(time.getTime()-statuss.lastshot)
         if(time.getTime()<statuss.lastshot){
             graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height+(statuss.lastshot-time.getTime())/25, 1)
         }else{
@@ -149,7 +149,26 @@ async function setup(){
     
     socket.on("statusUpdate", (stat)=>{
         statuss=Object.assign({}, stat);
-        console.innerHTML=statuss.lastshot
+       
+        if(statuss.shield!=0){
+            console.innerHTML="shield"
+        }else if(statuss.laser!=0){
+            console.innerHTML="laser"
+        }else if(statuss.shotgun!=0){
+            console.innerHTML="shotgun"
+        }else if(statuss.invis!=0){
+            console.innerHTML="invis"
+        }else if(statuss.reload!=0){
+            console.innerHTML="reload"
+        }else if(statuss.speed!=0){
+            console.innerHTML="speed"
+        }else if(statuss.chill!=0){
+            console.innerHTML="chill"
+        }else if(statuss.revive!=0){
+            console.innerHTML="revive"
+        }else{
+            console.innerHTML="nista"
+        }
     })
     
     
