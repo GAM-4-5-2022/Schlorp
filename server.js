@@ -331,17 +331,17 @@ async function mainLoop(){
             }
         }
 
-        delpackets.sort()
+        delpackets.sort((a,b)=>a-b)
         delpackets=delpackets.reverse()
         for(i=0; i<delpackets.length; i++){
             packets.splice(delpackets[i], 1)
         }
-        delprojectiles.sort()
+        delprojectiles.sort((a,b)=>a-b)
         delprojectiles=delprojectiles.reverse()
         for(i=0; i<delprojectiles.length; i++){
             projectiles.splice(delprojectiles[i], 1)
         }
-        delplayers.sort()
+        delplayers.sort((a,b)=>a-b)
         delplayers=delplayers.reverse()
         for(i=0; i<delplayers.length; i++){
             players.splice(delplayers[i], 1)
