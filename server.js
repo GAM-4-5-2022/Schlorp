@@ -56,7 +56,6 @@ packet.effects=["shield", "laser", "shotgun", "reload", "invis", "speed", "chill
 packet.durations=[7000, 1, 1, 10000, 7000, 20000, 5000, 1]
 packets=[]
 
-
 function checkPoint(point, rect){
     
     let sides = [[0,0,0],[0,0,0]]
@@ -81,15 +80,13 @@ function checkPoint(point, rect){
         
     }
     
-    return(true)
-        
+    return(true) 
 
 }
 
 function distance(x1,y1,x2,y2){
     return(Math.sqrt(((x2-x1)**2)+((y2-y1)**2)))
 }
-
 
 function getPoints(x,y,w,h,rot){
     let r = Math.sqrt((w/2)**2+(h/2)**2)
@@ -119,11 +116,6 @@ async function mainLoop(){
             console.log("Packet spawn")
             console.log(packets[packets.length-1])
         }
-        
-        
-        
-        
-        
         
         for(let i=0; i<players.length; i++){
             if(players[i].effects.shield){
@@ -158,12 +150,6 @@ async function mainLoop(){
                     players[i].effects.shield=2000
                 }
             }
-            
-            
-            
-            
-            
-            
             
             coordtest=[...players[i].coords]
             if(!players[i].effects.chill && !players[i].effects.reviving){
@@ -231,18 +217,11 @@ async function mainLoop(){
                         }
                     }
                 }
-            }
-            
-                
+            } 
             if(!collision){
                 
                 players[i].coords=[...coordtest]
             }
-            
-            
-            
-            
-            
             if(Math.abs(players[i].mouserot-players[i].coords[3])<0.1){
                 players[i].coords[3]=players[i].mouserot
             }else{
@@ -280,10 +259,6 @@ async function mainLoop(){
             collision=false
             projectiles[i][0]+=(0.5+(0.5*projectiles[i][3]))*framerate*Math.cos(projectiles[i][2])
             projectiles[i][1]-=(0.5+(0.5*projectiles[i][3]))*framerate*Math.sin(projectiles[i][2])
-            
-            
-            
-            
             for(let k=0; k<walls.length; k++){
                 if( ((projectiles[i][0]-walls[k][0])**2 + (projectiles[i][1]-walls[k][1])**2) < ((walls[k][2])**2 + (walls[k][3])**2)){
                     
@@ -330,7 +305,15 @@ async function mainLoop(){
             for(let k=0; k<players.length; k++){
                 if( (!(players[k].effects.shield+players[k].effects.laser+players[k].effects.shotgun+players[k].effects.reload+players[k].effects.invis+players[k].effects.speed+players[k].effects.revive+players[k].effects.reviving))&&(((packets[i][0]-players[k].coords[0])**2 + (packets[i][1]-players[k].coords[1])**2) < (tanksize[0]*packet.size[0] + tanksize[1]*packet.size[1]))){
                     if(checkPoint([packets[i][0], packets[i][1]], getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2]))){
-                        players[k].effects[packets[i][2]]=packets[i][3]
+                        if(packets[i][2]!="chill"){
+							players[k].effects[packets[i][2]]=packets[i][3]
+						}else{
+							for(let l=0; l<players.length, l++){
+								if(l!=k){
+									players[l].effects[packets[i][2]]=packets[i][3]
+								}
+							}
+						}
                         console.log("EFFECT GOT: "+packets[i][2])
                         
                         collision=true
@@ -347,9 +330,7 @@ async function mainLoop(){
                 delpackets.push(i)
             }
         }
-        
-        
-        
+
         delpackets.sort()
         delpackets=delpackets.reverse()
         for(i=0; i<delpackets.length; i++){
@@ -368,7 +349,8 @@ async function mainLoop(){
         
         for(i=0; i<players.length; i++){
             await players[i].emit("positionUpdate", players[i].coords)
-            
+			time=new Date()
+            players[i].effects.time = time.getTime()
             await players[i].emit("statusUpdate", players[i].effects)
         }
         
@@ -394,31 +376,6 @@ setInterval(mainLoop, targetframerate)
 
 io.sockets.on("connection", (socket)=>{
     console.log("connected")
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     socket.coords=[80,80,0,0] //x position, y position, turret rotation, chasis rotation
     socket.forward=false
@@ -511,9 +468,6 @@ io.sockets.on("connection", (socket)=>{
     socket.on("movedMouse", (rot)=>{
         socket.mouserot=rot
     })
-    
-    
-    
     players.push(socket)
     
     socket.on("disconnect", async ()=>{  //deleting all instances of the client existing on the server
@@ -523,15 +477,6 @@ io.sockets.on("connection", (socket)=>{
 		console.log("disconnected "+disc)
 	})
 })
-
-
-
-
-
-
-
-
-
 
 
 http.listen(42069, ()=>{});
