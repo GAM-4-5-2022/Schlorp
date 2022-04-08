@@ -139,7 +139,7 @@ async function setup(){
         }
         window.console.log(statuss.time-statuss.lastshot)
         if(statuss.time<statuss.lastshot){
-            graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height+(statuss.lastshot-time.getTime())/25, 1)
+            graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height+(statuss.lastshot-statuss.time)/25, 1)
         }else{
             graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height, 1)
         }
