@@ -11,6 +11,11 @@ app.get('/', async (req, res) => {
         res.end(data)
     })
 })
+app.get('/piss', async (req, res) => {
+    fs.readFile("piss.html", function(er, data){
+        res.end(data)
+    })
+})
 app.get('/filelist', async (req, res) => {
     try {
         const files = await fs.promises.readdir("assets");
@@ -53,7 +58,7 @@ projectiles=[]
 packet={}
 packet.size=[30,30]
 packet.effects=["shield", "laser", "shotgun", "reload", "invis", "speed", "chill", "revive"]
-packet.durations=[7000, 1, 1, 10000, 7000, 20000, 5000, 1]
+packet.durations=[7000, 1, 1, 10000, 7000, 10000, 5000, 1]
 packets=[]
 
 function checkPoint(point, rect){
@@ -308,7 +313,7 @@ async function mainLoop(){
                         if(packets[i][2]!="chill"){
 							players[k].effects[packets[i][2]]=packets[i][3]
 						}else{
-							for(let l=0; l<players.length, l++){
+							for(let l=0; l<players.length; l++){
 								if(l!=k){
 									players[l].effects[packets[i][2]]=packets[i][3]
 								}
@@ -377,7 +382,7 @@ setInterval(mainLoop, targetframerate)
 io.sockets.on("connection", (socket)=>{
     console.log("connected")
     
-    socket.coords=[80,80,0,0] //x position, y position, turret rotation, chasis rotation
+    socket.coords=[80+Math.floor(Math.random()*mapwidth)*160,80+Math.floor(Math.random()*mapheight)*160,0,0] //x position, y position, turret rotation, chasis rotation
     socket.forward=false
     socket.backward=false
     socket.right=false
@@ -441,7 +446,7 @@ io.sockets.on("connection", (socket)=>{
             socket.effects.invis=0
             if(socket.effects.shotgun){
                 socket.effects.shotgun=0
-                for(let i=0; i<3; i++){
+                for(let i=0; i<5; i++){
                     let diffangle=(Math.random()-0.5)/3+socket.coords[3]
                     if(diffangle>(2*Math.PI)){
                         diffangle-=(2*Math.PI)
