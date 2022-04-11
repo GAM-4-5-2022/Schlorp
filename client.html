@@ -82,6 +82,9 @@ async function setup(){
     socket.on("wallUpdate", (walls)=>{
         walllist=walls
     })
+	colors=["blu","dblu","purp","red","green","yel","orang","pink"]
+	bullets=["bullet.png", "laser.png"]
+	
     spectator=false
     socket.on("spectator", (msg)=>{
         spectator=true
@@ -116,11 +119,11 @@ async function setup(){
         
         
         for(i=0; i<positions.tanks.length; i++){
-            graph.drawsprite("player1.png", positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][2]+(Math.PI/2), 1)
-            graph.drawsprite("arrow1.png",  positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][3]+(Math.PI/2), 4)
+            graph.drawsprite(colors[positions.tanks[i][4]]+"-bot.png", positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][2]-(Math.PI/2), 1)
+            graph.drawsprite(colors[positions.tanks[i][4]]+"-top.png",  positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][3]-(Math.PI/2), 1)
         }
         for(i=0; i<positions.projectiles.length; i++){
-            graph.drawsprite("block.png", positions.projectiles[i][0], positions.projectiles[i][1], positions.projectiles[i][2], 0.5)
+            graph.drawsprite(bullets[positions.projectiles[i][3]], positions.projectiles[i][0], positions.projectiles[i][1], -positions.projectiles[i][2]+(Math.PI/2), 2)
         }
         for(i=0; i<positions.packs.length; i++){
             graph.drawsprite("block.png", positions.packs[i][0], positions.packs[i][1], 0, 2)

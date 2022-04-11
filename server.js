@@ -27,7 +27,7 @@ app.get('/filelist', async (req, res) => {
 });
 
 players=[]
-tanksize=[50,80]
+tanksize=[50,65]
 turretlen=Math.sqrt((tanksize[0]/2)**2+(tanksize[1]/2)**2)
 targetframerate=15
 framerate=15
@@ -162,15 +162,15 @@ async function mainLoop(){
                 coordtest[2]-=0.04/20*framerate**players[i].right
                 coordtest[0]+=5/20*framerate*players[i].forward*Math.cos(players[i].coords[2])
                 coordtest[1]-=5/20*framerate*players[i].forward*Math.sin(players[i].coords[2])
-                coordtest[0]-=5/20*framerate*players[i].backward*Math.cos(players[i].coords[2])
-                coordtest[1]+=5/20*framerate*players[i].backward*Math.sin(players[i].coords[2])
+                coordtest[0]-=5/40*framerate*players[i].backward*Math.cos(players[i].coords[2])
+                coordtest[1]+=5/40*framerate*players[i].backward*Math.sin(players[i].coords[2])
                 if(players[i].effects.speed){
                     coordtest[2]+=0.04/20*framerate**players[i].left
                     coordtest[2]-=0.04/20*framerate**players[i].right
                     coordtest[0]+=5/20*framerate*players[i].forward*Math.cos(players[i].coords[2])
                     coordtest[1]-=5/20*framerate*players[i].forward*Math.sin(players[i].coords[2])
-                    coordtest[0]-=5/20*framerate*players[i].backward*Math.cos(players[i].coords[2])
-                    coordtest[1]+=5/20*framerate*players[i].backward*Math.sin(players[i].coords[2])
+                    coordtest[0]-=5/40*framerate*players[i].backward*Math.cos(players[i].coords[2])
+                    coordtest[1]+=5/40*framerate*players[i].backward*Math.sin(players[i].coords[2])
                 }
             }
             
@@ -254,6 +254,7 @@ async function mainLoop(){
             }
             if(!players[i].effects.invis){
                 positions.tanks.push(players[i].coords)
+				
             }
             
         }
@@ -361,7 +362,7 @@ async function mainLoop(){
         
         
         await io.emit("frameUpdate", positions)
-        await io.emit("debugUpdate", debugpos)
+        //await io.emit("debugUpdate", debugpos)
     }catch(e){
         console.log("Skipped frame: "+e)
     }
@@ -382,16 +383,20 @@ setInterval(mainLoop, targetframerate)
 io.sockets.on("connection", (socket)=>{
     console.log("connected")
     
-    socket.coords=[80+Math.floor(Math.random()*mapwidth)*160,80+Math.floor(Math.random()*mapheight)*160,0,0] //x position, y position, turret rotation, chasis rotation
+    socket.coords=[80+Math.floor(Math.random()*mapwidth)*160,80+Math.floor(Math.random()*mapheight)*160,0,0, Math.floor(Math.random()*8)] //x position, y position, turret rotation, chasis rotation
     socket.forward=false
     socket.backward=false
     socket.right=false
     socket.left=false
     socket.mouserot=0
-    socket.effects={}
+	
+	socket.effects={}
     socket.effects.dead=false
     socket.effects.lastshot=0
     
+	
+	
+	
     socket.effects.shield=0
     socket.effects.laser=0
     socket.effects.shotgun=0
