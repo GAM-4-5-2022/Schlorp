@@ -127,6 +127,7 @@ async function mainLoop(){
                 players[i].effects.shield-=framerate
                 if(players[i].effects.shield<0){
                     players[i].effects.shield=0
+                    players[i].coords[5]=0
                 }
             }else if(players[i].effects.reload){
                 players[i].effects.reload-=framerate
@@ -153,6 +154,7 @@ async function mainLoop(){
                 if(players[i].effects.reviving<=0){
                     players[i].effects.reviving=0
                     players[i].effects.shield=2000
+                    players[i].coords[5]=1
                 }
             }
             
@@ -313,6 +315,9 @@ async function mainLoop(){
                     if(checkPoint([packets[i][0], packets[i][1]], getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2]))){
                         if(packets[i][2]!="chill"){
 							players[k].effects[packets[i][2]]=packets[i][3]
+                            if(packets[i][2]=="shield"){
+                                players[k].coords[5]=1
+                            }
 						}else{
 							for(let l=0; l<players.length; l++){
 								if(l!=k){
@@ -383,7 +388,7 @@ setInterval(mainLoop, targetframerate)
 io.sockets.on("connection", (socket)=>{
     console.log("connected")
     
-    socket.coords=[80+Math.floor(Math.random()*mapwidth)*160,80+Math.floor(Math.random()*mapheight)*160,0,0, Math.floor(Math.random()*8)] //x position, y position, turret rotation, chasis rotation
+    socket.coords=[80+Math.floor(Math.random()*mapwidth)*160,80+Math.floor(Math.random()*mapheight)*160,0,0, Math.floor(Math.random()*8), 0] //x position, y position, turret rotation, chasis rotation
     socket.forward=false
     socket.backward=false
     socket.right=false

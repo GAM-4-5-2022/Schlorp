@@ -82,8 +82,9 @@ async function setup(){
     socket.on("wallUpdate", (walls)=>{
         walllist=walls
     })
+    effect=0
 	colors=["blu","dblu","purp","red","green","yel","orang","pink"]
-	bullets=["bullet.png", "laser.png"]
+	bullets=["bullet.png", "laser-bullet.png"]
 	
     spectator=false
     socket.on("spectator", (msg)=>{
@@ -121,6 +122,9 @@ async function setup(){
         for(i=0; i<positions.tanks.length; i++){
             graph.drawsprite(colors[positions.tanks[i][4]]+"-bot.png", positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][2]-(Math.PI/2), 1)
             graph.drawsprite(colors[positions.tanks[i][4]]+"-top.png",  positions.tanks[i][0], positions.tanks[i][1], -positions.tanks[i][3]-(Math.PI/2), 1)
+            if(positions.tanks[i][5]){
+                graph.drawsprite("shield-eff.png",  positions.tanks[i][0], positions.tanks[i][1], 0, 1)
+            }
         }
         for(i=0; i<positions.projectiles.length; i++){
             graph.drawsprite(bullets[positions.projectiles[i][3]], positions.projectiles[i][0], positions.projectiles[i][1], -positions.projectiles[i][2]+(Math.PI/2), 2)
@@ -142,12 +146,17 @@ async function setup(){
                 graph.drawsprite("vertwall.png", walllist[i][0], walllist[i][1], 0, 1)
             }
         }
-        window.console.log(statuss.time-statuss.lastshot)
+        
         if(statuss.time<statuss.lastshot){
             graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height+(statuss.lastshot-statuss.time)/25, 1)
         }else{
             graph.drawstatus("reload_bullet.png", canvas.width-images["reload_bullet.png"].width, canvas.height-images["reload_bullet.png"].height, 1)
         }
+        if(effect){
+            graph.drawstatus(effect+".png", canvas.width-images["reload_bullet.png"].width-images[effect+".png"].width/10, canvas.height-images[effect+".png"].height/10, 0.1)
+        
+        }
+        
         
         graph.swapbuffer()
     })
@@ -157,22 +166,41 @@ async function setup(){
        
         if(statuss.shield!=0){
             console.innerHTML="shield"
-        }else if(statuss.laser!=0){
+            effect="shield"
+        }
+        if(statuss.laser!=0){
             console.innerHTML="laser"
-        }else if(statuss.shotgun!=0){
+            effect="laser"
+        }
+        if(statuss.shotgun!=0){
             console.innerHTML="shotgun"
-        }else if(statuss.invis!=0){
+            effect="shotgun"
+        }
+        if(statuss.invis!=0){
             console.innerHTML="invis"
-        }else if(statuss.reload!=0){
+            effect="invis"
+        }
+        if(statuss.reload!=0){
             console.innerHTML="reload"
-        }else if(statuss.speed!=0){
+            effect="reload"
+        }
+        if(statuss.speed!=0){
             console.innerHTML="speed"
-        }else if(statuss.chill!=0){
-            console.innerHTML="chill"
-        }else if(statuss.revive!=0){
+            effect="speed"
+        }
+        if(statuss.revive!=0){
             console.innerHTML="revive"
-        }else{
+            effect="revive"
+        }
+        
+        if(statuss.chill!=0){
+            console.innerHTML="chill"
+            effect="chill"
+        }
+        
+        if(statuss.revive==0 && statuss.chill==0 && statuss.speed==0 && statuss.reload==0 && statuss.invis==0 && statuss.shotgun==0 && statuss.laser==0 && statuss.shield==0){
             console.innerHTML="nista"
+            effect=0
         }
     })
     
