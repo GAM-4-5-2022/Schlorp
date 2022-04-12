@@ -22,7 +22,6 @@ border:1px solid black
 
 
 
-
 </body>
 
 
@@ -82,6 +81,13 @@ async function setup(){
     socket.on("wallUpdate", (walls)=>{
         walllist=walls
     })
+    soundm = new Audio()
+    sourcem  = await document.createElement("source");
+    sourcem.src  = "/assets/music.mp3";
+    soundm.appendChild(sourcem)
+    soundm.loop=true
+    soundm.volume=0.4
+    soundm.play()
     effect=0
 	colors=["blu","dblu","purp","red","green","yel","orang","pink"]
 	bullets=["bullet.png", "laser-bullet.png"]
@@ -131,6 +137,8 @@ async function setup(){
         }
         for(i=0; i<positions.packs.length; i++){
             graph.drawsprite("block.png", positions.packs[i][0], positions.packs[i][1], 0, 2)
+            graph.drawsprite(positions.packs[i][2]+".png", positions.packs[i][0], positions.packs[i][1], 0, 0.05)
+            
         }
         
         
@@ -228,6 +236,16 @@ async function setup(){
                         
         }
     })
+    
+    socket.on("playSound", (src)=>{
+        let sound = new Audio()
+        let source  = document.createElement("source");
+        source.src  = "/assets/"+src+".wav";
+        sound.appendChild(source)
+        sound.play()
+    })
+    
+    
 }
 
 
@@ -303,6 +321,7 @@ async function mouseMoveEvent(event){
 }
 
 async function mouseDownEvent(event){
+    soundm.play()
     if(spectator){
     
     }else{

@@ -27,7 +27,7 @@ app.get('/filelist', async (req, res) => {
 });
 
 players=[]
-tanksize=[50,65]
+tanksize=[60,60]
 turretlen=Math.sqrt((tanksize[0]/2)**2+(tanksize[1]/2)**2)
 targetframerate=15
 framerate=15
@@ -115,11 +115,19 @@ async function mainLoop(){
         if(Math.random()*7000<framerate){
 
             let type=Math.floor(Math.random()*packet.effects.length)
-            
-            
-            packets.push([80+Math.floor(Math.random()*mapwidth)*160, 80+Math.floor(Math.random()*mapheight)*160, packet.effects[type], packet.durations[type]])
-            console.log("Packet spawn")
-            console.log(packets[packets.length-1])
+            let newpack=[80+Math.floor(Math.random()*mapwidth)*160, 80+Math.floor(Math.random()*mapheight)*160, packet.effects[type], packet.durations[type]]
+            let isnew=true
+            for(let i =0; i<packets.length; i++){
+                if(newpack[0]==packets[i][0] && newpack[1]==packets[i][1]){
+                    isnew=false
+                    break
+                }
+            }
+            if(isnew){
+                packets.push(newpack)
+                console.log("Packet spawn")
+                console.log(packets[packets.length-1])
+            }
         }
         
         for(let i=0; i<players.length; i++){
@@ -289,6 +297,7 @@ async function mainLoop(){
                                 players[k].effects.revive=0
                             }else{
                                 players[k].removeAllListeners()
+                                players[k].emit("playSound","gameover")
                                 players[k].emit("spectator", "")
                                 delplayers.push(k)
                             }
@@ -313,6 +322,7 @@ async function mainLoop(){
             for(let k=0; k<players.length; k++){
                 if( (!(players[k].effects.shield+players[k].effects.laser+players[k].effects.shotgun+players[k].effects.reload+players[k].effects.invis+players[k].effects.speed+players[k].effects.revive+players[k].effects.reviving))&&(((packets[i][0]-players[k].coords[0])**2 + (packets[i][1]-players[k].coords[1])**2) < (tanksize[0]*packet.size[0] + tanksize[1]*packet.size[1]))){
                     if(checkPoint([packets[i][0], packets[i][1]], getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2]))){
+                        players[k].emit("playSound", "package")
                         if(packets[i][2]!="chill"){
 							players[k].effects[packets[i][2]]=packets[i][3]
                             if(packets[i][2]=="shield"){
@@ -454,6 +464,7 @@ io.sockets.on("connection", (socket)=>{
         time=new Date()
         if((socket.effects.lastshot)<time.getTime() && socket.effects.reviving==0){
             socket.effects.invis=0
+            io.emit("playSound", "shoot")
             if(socket.effects.shotgun){
                 socket.effects.shotgun=0
                 for(let i=0; i<5; i++){
