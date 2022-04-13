@@ -116,7 +116,6 @@ async function mainLoop(){
         if(Math.random()*7000<framerate){
 
             let type=Math.floor(Math.random()*packet.effects.length)
-            type=1
             let newpack=[80+Math.floor(Math.random()*mapwidth)*160, 80+Math.floor(Math.random()*mapheight)*160, packet.effects[type], packet.durations[type]]
             let isnew=true
             for(let i =0; i<packets.length; i++){
