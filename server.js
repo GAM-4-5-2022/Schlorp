@@ -110,11 +110,13 @@ async function mainLoop(){
     
     let positions={"tanks":[], "projectiles":[], "packs":[]}
     let debugpos = []
+    let delplayers=[]
     try{
         let time=new Date()
         if(Math.random()*7000<framerate){
 
             let type=Math.floor(Math.random()*packet.effects.length)
+            type=1
             let newpack=[80+Math.floor(Math.random()*mapwidth)*160, 80+Math.floor(Math.random()*mapheight)*160, packet.effects[type], packet.durations[type]]
             let isnew=true
             for(let i =0; i<packets.length; i++){
@@ -196,12 +198,34 @@ async function mainLoop(){
                 if( ((coordtest[0]-players[k].coords[0])**2 + (coordtest[1]-players[k].coords[1])**2) < ((tanksize[0]**2 + tanksize[1]**2)*4)){
                     for(let j=0; j<4; j++){
                         if(checkPoint(points[j], getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2]))){
-                            
+                            if(players[k].effects.speed!=0){
+                                players[i].removeAllListeners()
+                                players[i].emit("playSound","gameover")
+                                players[i].emit("spectator", "")
+                                delplayers.push(i)
+                            }
+                            if(players[i].effects.speed!=0){
+                                players[k].removeAllListeners()
+                                players[k].emit("playSound","gameover")
+                                players[k].emit("spectator", "")
+                                delplayers.push(k)
+                            }
                             collision=true
                             break
                         }
                         if(checkPoint(getPoints(players[k].coords[0],players[k].coords[1],tanksize[0],tanksize[1],players[k].coords[2])[j], points )){
-                            
+                            if(players[k].effects.speed!=0){
+                                players[i].removeAllListeners()
+                                players[i].emit("playSound","gameover")
+                                players[i].emit("spectator", "")
+                                delplayers.push(i)
+                            }
+                            if(players[i].effects.speed!=0){
+                                players[k].removeAllListeners()
+                                players[k].emit("playSound","gameover")
+                                players[k].emit("spectator", "")
+                                delplayers.push(k)
+                            }
                             collision=true
                             break
                         }
@@ -269,12 +293,12 @@ async function mainLoop(){
             
         }
 
-        let delplayers=[]
+        
         let delprojectiles=[]
         for(i=0; i<projectiles.length; i++){
             collision=false
-            projectiles[i][0]+=(0.5+(0.5*projectiles[i][3]))*framerate*Math.cos(projectiles[i][2])
-            projectiles[i][1]-=(0.5+(0.5*projectiles[i][3]))*framerate*Math.sin(projectiles[i][2])
+            projectiles[i][0]+=(0.6+(0.7*projectiles[i][3]))*framerate*Math.cos(projectiles[i][2])
+            projectiles[i][1]-=(0.6+(0.7*projectiles[i][3]))*framerate*Math.sin(projectiles[i][2])
             for(let k=0; k<walls.length; k++){
                 if( ((projectiles[i][0]-walls[k][0])**2 + (projectiles[i][1]-walls[k][1])**2) < ((walls[k][2])**2 + (walls[k][3])**2)){
                     
